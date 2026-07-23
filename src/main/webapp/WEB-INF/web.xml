@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+    version="5.0">
+    <display-name>ParcOrdinateurServlet</display-name>
+
+    <servlet>
+        <servlet-name>OrdinateurServlet</servlet-name>
+        <servlet-class>controller.OrdinateurServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>ShowFormOrdiServlet</servlet-name>
+        <servlet-class>controller.ShowFormOrdiServlet</servlet-class>
+    </servlet>
+
+
+
+    <servlet>
+        <servlet-name>UtilisateurServlet</servlet-name>
+        <servlet-class>controller.UtilisateurServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>OrdinateurEtatServlet</servlet-name>
+        <servlet-class>controller.OrdinateurEtatServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>OrdinateurServlet</servlet-name>
+        <url-pattern>/ordi/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>OrdinateurEtatServlet</servlet-name>
+        <url-pattern>/ordi/etat</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>OrdinateurServlet</servlet-name>
+        <url-pattern>/listeOrdi</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>OrdinateurServlet</servlet-name>
+        <url-pattern>/modifierOrdi</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>OrdinateurServlet</servlet-name>
+        <url-pattern>/supprimerOrdi</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>ShowFormOrdiServlet</servlet-name>
+        <url-pattern>/formOrdi</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>UtilisateurServlet</servlet-name>
+        <url-pattern>/login</url-pattern>
+    </servlet-mapping>
+
+</web-app>
