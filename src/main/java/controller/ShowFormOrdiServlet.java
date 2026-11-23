@@ -26,9 +26,14 @@ public class ShowFormOrdiServlet extends HttpServlet {
         req.setAttribute("modeles", modeles);
 
         if (isModif) {
-            Ordinateur ordinateur = new Ordinateur().getById(Integer.parseInt(idPC));
-
-            req.setAttribute("ordinateur", ordinateur);
+            try {
+                Ordinateur ordinateur = new Ordinateur().getById(Integer.parseInt(idPC));
+                req.setAttribute("ordinateur", ordinateur);
+            } catch (NumberFormatException e) {
+                throw new ServletException("Identifiant d'ordinateur invalide", e);
+            } catch (java.sql.SQLException e) {
+                throw new ServletException("Erreur lors du chargement de l'ordinateur", e);
+            }
         }
 
         this.getServletContext().getRequestDispatcher("/form.jsp").forward(req, resp);

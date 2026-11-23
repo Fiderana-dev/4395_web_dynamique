@@ -15,20 +15,23 @@ import model.Ordinateur;
 
 public class OrdinateurServlet extends HttpServlet {
 
+    private boolean utilisateurConnecte(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        return session != null && session.getAttribute("nomUtilisateur") != null;
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String path = request.getServletPath();
 
-
-        if("/liste".equals(request.getPathInfo())){
+        if ("/liste".equals(request.getPathInfo())) {
             try {
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 List<Ordinateur> ordinateurs = new Ordinateur().getAll();
-                String json = new Gson().toJson(ordinateurs);
-                response.getWriter().write(json);
+                response.getWriter().write(new Gson().toJson(ordinateurs));
             } catch (SQLException e) {
                 throw new ServletException("Erreur lors du chargement de la liste JSON", e);
             }
@@ -47,29 +50,46 @@ public class OrdinateurServlet extends HttpServlet {
         }
 
         if ("/supprimerOrdi".equals(path)) {
-            String idPC = request.getParameter("idPC");
-            HttpSession session = request.getSession();
-            String nomUtilisateur = (String) session.getAttribute("nomUtilisateur");
-            if (nomUtilisateur == null) {
+            if (!utilisateurConnecte(request)) {
                 response.sendRedirect(request.getContextPath() + "/login");
-            } else {
-                if (idPC != null && !idPC.isEmpty()) {
-                    new Ordinateur().delete(idPC);
-                }
+                return;
+            }
+
+            String idPC = request.getParameter("idPC");
+            if (idPC == null || idPC.isBlank()) {
                 response.sendRedirect(request.getContextPath() + "/listeOrdi");
+                return;
+            }
+
+            try {
+                new Ordinateur().delete(Integer.parseInt(idPC));
+                response.sendRedirect(request.getContextPath() + "/listeOrdi");
+            } catch (NumberFormatException e) {
+                throw new ServletException("Identifiant d'ordinateur invalide", e);
+            } catch (SQLException e) {
+                throw new ServletException("Erreur lors de la suppression", e);
             }
             return;
         }
 
-        // Afficher le formulaire d'ajout/modification avec la liste des modèles
+        if (!utilisateurConnecte(request)) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         List<Model> modeles = new Model().listerModels();
         request.setAttribute("modeles", modeles);
 
         String idPCStr = request.getParameter("idPC");
-        if (idPCStr != null && !idPCStr.isEmpty()) {
-            int idPC = Integer.parseInt(idPCStr);
-            Ordinateur ordi = new Ordinateur().getById(idPC);
-            request.setAttribute("ordinateur", ordi);
+        if (idPCStr != null && !idPCStr.isBlank()) {
+            try {
+                Ordinateur ordi = new Ordinateur().getById(Integer.parseInt(idPCStr));
+                request.setAttribute("ordinateur", ordi);
+            } catch (NumberFormatException e) {
+                throw new ServletException("Identifiant d'ordinateur invalide", e);
+            } catch (SQLException e) {
+                throw new ServletException("Erreur lors du chargement de l'ordinateur", e);
+            }
         }
 
         request.getRequestDispatcher("/form.jsp").forward(request, response);
@@ -78,13 +98,18 @@ public class OrdinateurServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if (!utilisateurConnecte(request)) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         String ram = request.getParameter("ram");
         String processeur = request.getParameter("processeur");
         String disqueDur = request.getParameter("disqueDur");
         String modele = request.getParameter("modele");
 
-        if (ram == null || processeur == null || disqueDur == null || modele == null
-                || ram.isEmpty() || processeur.isEmpty() || disqueDur.isEmpty() || modele.isBlank()) {
+        if (ram == null || ram.isBlank() || processeur == null || processeur.isBlank()
+                || disqueDur == null || disqueDur.isBlank() || modele == null || modele.isBlank()) {
             throw new ServletException("Tous les champs sont obligatoires");
         }
 
@@ -94,30 +119,17 @@ public class OrdinateurServlet extends HttpServlet {
             int idModele = Integer.parseInt(modele);
             String processeurValue = processeur.trim();
 
-            if (ramValue <= 0) {
-                throw new ServletException("La RAM doit être positive");
-            }
-            if (disqueDurValue <= 0) {
-                throw new ServletException("Le disque dur doit être positif");
+            if (ramValue <= 0 || disqueDurValue <= 0) {
+                throw new ServletException("La RAM et le disque dur doivent être positifs");
             }
 
-            Ordinateur ordi;
             String idPCStr = request.getParameter("idPC");
-            HttpSession session = request.getSession();
-            String nomUtilisateur = (String) session.getAttribute("nomUtilisateur");
-            
-            if (nomUtilisateur == null) {
-                response.sendRedirect(request.getContextPath() + "/login");
-                return;
-            }
-            
-            if (idPCStr != null && !idPCStr.isEmpty()) {
-                int idPC = Integer.parseInt(idPCStr);
-                ordi = new Ordinateur(idPC, idModele, processeurValue, ramValue, disqueDurValue);
+            if (idPCStr != null && !idPCStr.isBlank()) {
+                Ordinateur ordi = new Ordinateur(Integer.parseInt(idPCStr), idModele,
+                        processeurValue, ramValue, disqueDurValue);
                 ordi.update();
             } else {
-                ordi = new Ordinateur(idModele, processeurValue, ramValue, disqueDurValue);
-                ordi.insert();
+                new Ordinateur(idModele, processeurValue, ramValue, disqueDurValue).insert();
             }
             response.sendRedirect(request.getContextPath() + "/listeOrdi");
         } catch (NumberFormatException e) {
